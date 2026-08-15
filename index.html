@@ -1,37 +1,67 @@
 <!DOCTYPE html>
-<html>
+<html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>GEO‑3D‑ASCII · RUN8 · iki1uc</title>
+<title>FIELD · Stage · Etage · F81-UNIT</title>
+
 <style>
-body { background:#000; color:#0f0; font-family:Consolas; padding:20px; }
-pre { font-size:16px; line-height:18px; }
+body{background:#000;color:#0f0;font-family:monospace;padding:40px;}
+pre{background:#111;border-left:3px solid #6cf;padding:12px;}
+button{background:#111;color:#0f0;border:1px solid #333;padding:8px 16px;margin-bottom:10px;}
+.block{margin-bottom:25px;}
+h2{color:#6cf;}
 </style>
 </head>
+
 <body>
 
-<h2>GEO‑3D‑ASCII · RUN8</h2>
-<pre id="geo">START…</pre>
+<h1>FIELD · Scientist Verification · F81-UNIT</h1>
 
-<script>
-let f = 0;
+<!-- STAGE 1: ID -->
+<div class="block">
+    <h2>Stage 1 · FIELD-ID</h2>
+    <button onclick="verifyID()">ID prüfen</button>
+    <pre id="id_out">Bereit…</pre>
+</div>
 
-function anim(){
-    f++;
+<!-- STAGE 2: Etage · ECO-Feld -->
+<div class="block">
+    <h2>Stage 2 · Etage · ECO-Feld</h2>
+    <button onclick="verifyEco()">ECO-Feld prüfen</button>
+    <pre id="eco_out">Bereit…</pre>
+</div>
 
-    // 3D‑Rotation simuliert durch wechselnde Tiefe
-    const depth = ["●","○","·","∙","•"];
-    const d = (i)=> depth[(f+i)%depth.length];
+<!-- STAGE 3: Etage · Wirkung -->
+<div class="block">
+    <h2>Stage 3 · Etage · Wirkung</h2>
+    <button onclick="verifyEffect()">Wirkung prüfen</button>
+    <pre id="effect_out">Bereit…</pre>
+</div>
 
-    // Anime‑Glow simuliert durch Funken
-    const glow = (f%2 ? "✦" : "✧");
+<script type="module">
+import { FIELD } from "./FIELD.js";
 
-    // Amiga‑Raster simuliert durch horizontale Balken
-    const raster = (f%3 ? "▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓" : "██████████████████");
+// STAGE 1
+function verifyID(){
+    const out = FIELD.id();
+    document.getElementById("id_out").textContent =
+        JSON.stringify(out, null, 2);
+}
 
-    const geo = `
-GEO‑3D‑ROTATION (frame ${f})
+// STAGE 2
+function verifyEco(){
+    const out = FIELD.eco();
+    document.getElementById("eco_out").textContent =
+        JSON.stringify(out, null, 2);
+}
 
-X‑Axis  ─── ${d(1)} ${d(2)} ${d(3)}
-Y‑Axis  ─── ${d(2)} ${d(3)} ${d(4)}
-Z‑
+// STAGE 3
+function verifyEffect(){
+    const out = FIELD.effect();
+    document.getElementById("effect_out").textContent =
+        JSON.stringify(out, null, 2);
+}
+</script>
+
+</body>
+</html>
