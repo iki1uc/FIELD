@@ -2,71 +2,689 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>FIELD · Stage · Etage · F81-UNIT</title>
-
+<title>MXU · OS Runtime · mit FIELD</title>
 <style>
-body{background:#000;color:#0f0;font-family:monospace;padding:40px;}
-pre{background:#111;border-left:3px solid #6cf;padding:12px;}
-button{background:#111;color:#0f0;border:1px solid #333;padding:8px 16px;margin-bottom:10px;}
-.block{margin-bottom:25px;}
-h2{color:#6cf;}
+:root {
+    --fg: #0ff;
+    --bg: #000;
+    --field-color: #6f6;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: 'Consolas', monospace;
+    padding: 20px;
+    min-height: 100vh;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: 16px;
+}
+
+header {
+    border-bottom: 2px solid var(--fg);
+    padding-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+header h1 { color: var(--fg); font-size: 20px; }
+#clock { font-size: 14px; color: #666; }
+
+main {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 16px;
+    height: 100%;
+    min-height: 400px;
+}
+
+#sequence {
+    background: #0a0a12;
+    border: 1px solid #1a1a2a;
+    border-radius: 10px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.step {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 14px;
+    border-radius: 6px;
+    background: #0e0e1a;
+    border-left: 3px solid #222;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+.step .num {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #1a1a2a;
+    color: #666;
+    font-size: 12px;
+    font-weight: bold;
+    flex-shrink: 0;
+    transition: all 0.3s;
+}
+.step .name { font-weight: bold; font-size: 15px; flex: 1; }
+.step .status { font-size: 12px; color: #444; transition: all 0.3s; }
+.step .indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #222;
+    transition: all 0.3s;
+    flex-shrink: 0;
+}
+
+.step.active { border-left-color: var(--fg); background: #0f1a1a; }
+.step.active .num { background: var(--fg); color: #000; }
+.step.active .indicator { background: var(--fg); box-shadow: 0 0 12px var(--fg); }
+
+.step.done { border-left-color: #4f4; opacity: 0.7; }
+.step.done .num { background: #4f4; color: #000; }
+.step.done .indicator { background: #4f4; }
+
+.step.error { border-left-color: #f44; background: #1a0a0a; }
+.step.error .num { background: #f44; color: #000; }
+.step.error .indicator { background: #f44; }
+
+.step.field-module { border-left-color: var(--field-color); }
+.step.field-module .name { color: var(--field-color); }
+
+#status-panel {
+    background: #0a0a12;
+    border: 1px solid #1a1a2a;
+    border-radius: 10px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+#status-panel h3 { font-size: 13px; color: #666; border-bottom: 1px solid #1a1a2a; padding-bottom: 8px; }
+#live-log {
+    flex: 1;
+    overflow-y: auto;
+    font-size: 12px;
+    color: #6a6a8a;
+    line-height: 1.6;
+    min-height: 200px;
+    max-height: 400px;
+}
+#live-log .entry { padding: 2px 0; border-bottom: 1px solid #0a0a12; }
+#live-log .entry .time { color: #444; }
+#live-log .entry .msg { color: #8af; }
+#live-log .entry .msg.ok { color: #4f4; }
+#live-log .entry .msg.err { color: #f44; }
+#live-log .entry .msg.warn { color: #ff4; }
+#live-log .entry .msg.field { color: #6f6; }
+
+#controls {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+}
+button {
+    background: #111;
+    color: var(--fg);
+    border: 1px solid #333;
+    padding: 8px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    transition: all 0.2s;
+}
+button:hover { background: #1a1a2a; border-color: var(--fg); }
+button:active { transform: scale(0.95); }
+button.primary { border-color: var(--fg); background: var(--fg); color: #000; }
+button.primary:hover { background: #6cf; border-color: #6cf; }
+button.danger { border-color: #f44; color: #f44; }
+button.danger:hover { background: #f44; color: #000; }
+button.success { border-color: #4f4; color: #4f4; }
+button.success:hover { background: #4f4; color: #000; }
+button.field-btn { border-color: #6f6; color: #6f6; }
+button.field-btn:hover { background: #6f6; color: #000; }
+
+#geo-container {
+    grid-column: 1 / -1;
+    background: #0a0a12;
+    border: 1px solid #1a1a2a;
+    border-radius: 10px;
+    padding: 16px;
+    min-height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+#geo-container pre {
+    font-size: 13px;
+    color: #4a6a6a;
+    text-align: center;
+    line-height: 1.4;
+    white-space: pre;
+}
+
+#field-data {
+    grid-column: 1 / -1;
+    background: #0a0a12;
+    border: 1px solid #1a1a2a;
+    border-radius: 10px;
+    padding: 12px 16px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    font-size: 12px;
+}
+#field-data .stage-box {
+    background: #0e0e1a;
+    border: 1px solid #1a1a2a;
+    border-radius: 6px;
+    padding: 10px;
+}
+#field-data .stage-box h4 { color: #6f6; font-size: 12px; margin-bottom: 4px; }
+#field-data .stage-box .value { color: #8af; font-size: 11px; white-space: pre-wrap; word-break: break-all; }
+
+@media (max-width: 800px) {
+    main { grid-template-columns: 1fr; }
+    #geo-container { min-height: 80px; }
+    #field-data { grid-template-columns: 1fr; }
+}
 </style>
 </head>
-
 <body>
 
-<h1>FIELD · Scientist Verification · F81-UNIT</h1>
+<!-- ===== HEADER ===== -->
+<header>
+    <div>
+        <h1>⚡ MXU · OS Runtime · mit FIELD</h1>
+        <div style="font-size:12px;color:#666;">F81-UNIT · 3 Etagen · 3-9-27-81</div>
+    </div>
+    <div>
+        <span id="clock">⏱️ --:--:--</span>
+        <span style="margin-left:16px;color:#666;" id="cycle-count">Zyklus 0</span>
+    </div>
+</header>
 
-<!-- STAGE 1: ID -->
-<div class="block">
-    <h2>Stage 1 · FIELD-ID</h2>
-    <button onclick="verifyID()">ID prüfen</button>
-    <pre id="id_out">Bereit…</pre>
+<!-- ===== MAIN ===== -->
+<main>
+    <!-- SEQUENZ mit FIELD -->
+    <div id="sequence">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <span style="color:#666;font-size:13px;">▶ BOOT-SEQUENZ</span>
+            <span id="progress-text" style="font-size:12px;color:#444;">0/11</span>
+        </div>
+
+        <!-- BOOT-Module (10) + FIELD (1) = 11 -->
+        <div class="step" data-step="0">
+            <span class="num">1</span>
+            <span class="name">DOOR</span>
+            <span class="status">⏳ wartet</span>
+            <span class="indicator"></span>
+        </div>
+        <div class="step" data-step="1">
+            <span class="num">2</span>
+            <span class="name">DOO</span>
+            <span class="status">⏳ wartet</span>
+            <span class="indicator"></span>
+        </div>
+        <div class="step" data-step="2">
+            <span class="num">3</span>
+            <span class="name">RESPO</span>
+            <span class="status">⏳ wartet</span>
+            <span class="indicator"></span>
+        </div>
+        <div class="step" data-step="3">
+            <span class="num">4</span>
+            <span class="name">OS</span>
+            <span class="status">⏳ wartet</span>
+            <span class="indicator"></span>
+        </div>
+        <div class="step" data-step="4">
+            <span class="num">5</span>
+            <span class="name">NC.engine</span>
+            <span class="status">⏳ wartet</span>
+            <span class="indicator"></span>
+        </div>
+        <div class="step" data-step="5">
+            <span class="num">6</span>
+            <span class="name">243</span>
+            <span class="status">⏳ wartet</span>
+            <span class="indicator"></span>
+        </div>
+        <div class="step" data-step="6">
+            <span class="num">7</span>
+            <span class="name">SCORE</span>
+            <span class="status">⏳ wartet</span>
+            <span class="indicator"></span>
+        </div>
+        <div class="step" data-step="7">
+            <span class="num">8</span>
+            <span class="name">WETTE</span>
+            <span class="status">⏳ wartet</span>
+            <span class="indicator"></span>
+        </div>
+        <div class="step" data-step="8">
+            <span class="num">9</span>
+            <span class="name">SLIDE</span>
+            <span class="status">⏳ wartet</span>
+            <span class="indicator"></span>
+        </div>
+        <div class="step field-module" data-step="9">
+            <span class="num" style="background:#2a2a1a;color:#6f6;">10</span>
+            <span class="name" style="color:#6f6;">🌿 FIELD</span>
+            <span class="status">⏳ wartet</span>
+            <span class="indicator"></span>
+        </div>
+        <div class="step" data-step="10">
+            <span class="num">11</span>
+            <span class="name">⚡ Axiom</span>
+            <span class="status">⏳ wartet</span>
+            <span class="indicator"></span>
+        </div>
+
+        <div id="controls">
+            <button class="primary" id="btn-boot">▶ BOOT</button>
+            <button id="btn-step">⏭ STEP</button>
+            <button class="danger" id="btn-reset">⟲ RESET</button>
+            <button class="success" id="btn-auto">▶ AUTO</button>
+            <button class="field-btn" id="btn-field">🌿 FIELD</button>
+        </div>
+    </div>
+
+    <!-- STATUS -->
+    <div id="status-panel">
+        <h3>📊 SYSTEM-STATUS</h3>
+        <div id="live-log">
+            <div class="entry"><span class="time">[INIT]</span> <span class="msg">MXU · OS Runtime mit FIELD</span></div>
+            <div class="entry"><span class="time">[INIT]</span> <span class="msg">🌿 FIELD F81-UNIT geladen (3 Etagen)</span></div>
+            <div class="entry"><span class="time">[INIT]</span> <span class="msg">📦 11 Module — warte auf BOOT</span></div>
+        </div>
+        <div style="display:flex;gap:12px;font-size:12px;color:#666;border-top:1px solid #1a1a2a;padding-top:8px;">
+            <span>🔴 <span id="status-led" style="color:#f44;">●</span> idle</span>
+            <span>📦 <span id="module-count">0</span>/11 aktiv</span>
+            <span>🌿 <span id="field-status">—</span></span>
+        </div>
+    </div>
+</main>
+
+<!-- ===== GEO ===== -->
+<div id="geo-container">
+    <pre id="geo-display">
+   ▲
+  / \
+ /   \
+/_____\
+    </pre>
 </div>
 
-<!-- STAGE 2: Etage · ECO-Feld -->
-<div class="block">
-    <h2>Stage 2 · Etage · ECO-Feld</h2>
-    <button onclick="verifyEco()">ECO-Feld prüfen</button>
-    <pre id="eco_out">Bereit…</pre>
+<!-- ===== FIELD DATA ===== -->
+<div id="field-data">
+    <div class="stage-box">
+        <h4>🌿 Stage 1 · ID</h4>
+        <div class="value" id="field-id">—</div>
+    </div>
+    <div class="stage-box">
+        <h4>🌿 Stage 2 · ECO</h4>
+        <div class="value" id="field-eco">—</div>
+    </div>
+    <div class="stage-box">
+        <h4>🌿 Stage 3 · EFFECT</h4>
+        <div class="value" id="field-effect">—</div>
+    </div>
 </div>
 
-<!-- STAGE 3: Etage · Wirkung -->
-<div class="block">
-    <h2>Stage 3 · Etage · Wirkung</h2>
-    <button onclick="verifyEffect()">Wirkung prüfen</button>
-    <pre id="effect_out">Bereit…</pre>
-</div>
-
-<script type="module">
-import { FIELD } from "./FIELD.js";
-
-// STAGE 1
-function verifyID(){
-    const out = FIELD.id();
-    document.getElementById("id_out").textContent =
-        JSON.stringify(out, null, 2);
+<!-- ============================================================ -->
+<!-- SCRIPT — MIT FIELD.JS INTEGRATION -->
+<!-- ============================================================ -->
+<script type="importmap">
+{
+    "imports": {
+        "/home/iki1uc/FIELD.js": "./FIELD.js"
+    }
 }
-
-// STAGE 2
-function verifyEco(){
-    const out = FIELD.eco();
-    document.getElementById("eco_out").textContent =
-        JSON.stringify(out, null, 2);
-}
-
-// STAGE 3
-function verifyEffect(){
-    const out = FIELD.effect();
-    document.getElementById("effect_out").textContent =
-        JSON.stringify(out, null, 2);
-}
-  window.FIELD_DATA = {
-    owner: "Dr. Max Mustermann",
-    site: "Feld‑Nord",
-    metrics: { energyConsumption_kWh: 85, waterUse_m3: 90, emissions_tCO2e: 1.8, biodiversityIndex: 0.58 }
-  };
 </script>
 
-</body>
-</html>
+<script type="module">
+// ============================================================
+// 1. IMPORT FIELD
+// ============================================================
+import FIELD from '/home/iki1uc/FIELD.js';
+
+// ============================================================
+// 2. KONFIGURATION
+// ============================================================
+const MODULES = [
+    { id: 'DOOR',    label: 'DOOR',    status: 'waiting' },
+    { id: 'DOO',     label: 'DOO',     status: 'waiting' },
+    { id: 'RESPO',   label: 'RESPO',   status: 'waiting' },
+    { id: 'OS',      label: 'OS',      status: 'waiting' },
+    { id: 'NC.engine', label: 'NC.engine', status: 'waiting' },
+    { id: '243',     label: '243',     status: 'waiting' },
+    { id: 'SCORE',   label: 'SCORE',   status: 'waiting' },
+    { id: 'WETTE',   label: 'WETTE',   status: 'waiting' },
+    { id: 'SLIDE',   label: 'SLIDE',   status: 'waiting' },
+    { id: 'FIELD',   label: '🌿 FIELD', status: 'waiting', isField: true },
+    { id: 'AXIOM',   label: '⚡ Axiom', status: 'waiting' }
+];
+
+// ============================================================
+// 3. DOM-REFERENZEN
+// ============================================================
+const steps = document.querySelectorAll('.step');
+const logDiv = document.getElementById('live-log');
+const statusLed = document.getElementById('status-led');
+const moduleCount = document.getElementById('module-count');
+const progressText = document.getElementById('progress-text');
+const cycleCountEl = document.getElementById('cycle-count');
+const geoDisplay = document.getElementById('geo-display');
+
+const btnBoot = document.getElementById('btn-boot');
+const btnStep = document.getElementById('btn-step');
+const btnReset = document.getElementById('btn-reset');
+const btnAuto = document.getElementById('btn-auto');
+const btnField = document.getElementById('btn-field');
+
+const fieldIdEl = document.getElementById('field-id');
+const fieldEcoEl = document.getElementById('field-eco');
+const fieldEffectEl = document.getElementById('field-effect');
+const fieldStatusEl = document.getElementById('field-status');
+
+// ============================================================
+// 4. STATE
+// ============================================================
+let currentStep = -1;
+let isRunning = false;
+let autoMode = false;
+let autoTimer = null;
+let cycleCount = 0;
+let stepTimeouts = [];
+
+// FIELD-Kontext setzen
+window.FIELD_DATA = {
+    owner: "MXU·System",
+    site: "field.local",
+    metrics: {
+        energyConsumption_kWh: 42.0,
+        waterUse_m3: 120,
+        emissions_tCO2e: 3.4,
+        biodiversityIndex: 0.72
+    }
+};
+
+// ============================================================
+// 5. GEO-ASCII-ANIMATION
+// ============================================================
+const GEO_FRAMES = [
+    `   ▲\n  / \\\n /   \\\n/_____\\`,
+    `   ▲\n  /o\\\n /   \\\n/_____\\`,
+    `   ▲\n  /o\\\n / o \\\n/_____\\`,
+    `   ▲\n  /o\\\n / o \\\n/__o__\\`,
+    `   ▲\n  /o\\\n / o \\\n/__o__\\\n  ●`,
+    `   ○\n  / \\\n /   \\\n/_____\\`
+];
+let geoIndex = 0;
+setInterval(() => {
+    geoIndex = (geoIndex + 1) % GEO_FRAMES.length;
+    geoDisplay.textContent = GEO_FRAMES[geoIndex];
+}, 800);
+
+// ============================================================
+// 6. LOG
+// ============================================================
+function log(msg, type = 'info') {
+    const entry = document.createElement('div');
+    entry.className = 'entry';
+    const time = new Date().toLocaleTimeString();
+    const cls = type === 'ok' ? 'ok' : type === 'err' ? 'err' : type === 'warn' ? 'warn' : type === 'field' ? 'field' : '';
+    entry.innerHTML = `<span class="time">[${time}]</span> <span class="msg ${cls}">${msg}</span>`;
+    logDiv.appendChild(entry);
+    logDiv.scrollTop = logDiv.scrollHeight;
+    while (logDiv.children.length > 100) logDiv.removeChild(logDiv.firstChild);
+}
+
+// ============================================================
+// 7. FIELD-FUNKTIONEN
+// ============================================================
+function runFieldStage(stage) {
+    try {
+        let result;
+        if (stage === 1) result = FIELD.id();
+        else if (stage === 2) result = FIELD.eco();
+        else if (stage === 3) result = FIELD.effect();
+
+        // UI aktualisieren
+        if (stage === 1) fieldIdEl.textContent = JSON.stringify(result, null, 2);
+        if (stage === 2) fieldEcoEl.textContent = JSON.stringify(result, null, 2);
+        if (stage === 3) {
+            fieldEffectEl.textContent = JSON.stringify(result, null, 2);
+            fieldStatusEl.textContent = result.decision || '—';
+        }
+
+        log(`🌿 FIELD Stage ${stage}: ${result.meta?.label || 'F81'} — ${result.status || 'ok'}`, 'field');
+        return result;
+    } catch (e) {
+        log(`❌ FIELD Fehler: ${e.message}`, 'err');
+        return null;
+    }
+}
+
+function runFieldAll() {
+    log('🌿 FIELD — alle 3 Etagen werden ausgeführt...', 'field');
+    runFieldStage(1);
+    setTimeout(() => runFieldStage(2), 300);
+    setTimeout(() => runFieldStage(3), 600);
+}
+
+// ============================================================
+// 8. STEP-FUNKTIONEN
+// ============================================================
+function resetAll() {
+    isRunning = false;
+    if (autoTimer) { clearInterval(autoTimer); autoTimer = null; }
+    autoMode = false;
+    btnAuto.textContent = '▶ AUTO';
+    stepTimeouts.forEach(t => clearTimeout(t));
+    stepTimeouts = [];
+    currentStep = -1;
+
+    steps.forEach((step) => {
+        step.className = 'step';
+        const statusEl = step.querySelector('.status');
+        statusEl.textContent = '⏳ wartet';
+    });
+
+    // FIELD zurücksetzen
+    FIELD.reset();
+    fieldIdEl.textContent = '—';
+    fieldEcoEl.textContent = '—';
+    fieldEffectEl.textContent = '—';
+    fieldStatusEl.textContent = '—';
+
+    updateProgress();
+    updateModuleCount();
+    statusLed.textContent = '●';
+    statusLed.style.color = '#f44';
+    log('⟲ RESET — Alle Module zurückgesetzt', 'warn');
+}
+
+function updateProgress() {
+    const done = document.querySelectorAll('.step.done').length;
+    progressText.textContent = `${done}/${steps.length}`;
+}
+
+function updateModuleCount() {
+    const active = document.querySelectorAll('.step.done, .step.active').length;
+    moduleCount.textContent = active;
+}
+
+function executeStep(index) {
+    if (index >= MODULES.length) {
+        log('✅ ALLE MODULE AUSGEFÜHRT — System bereit!', 'ok');
+        statusLed.textContent = '●';
+        statusLed.style.color = '#4f4';
+        isRunning = false;
+
+        // FIELD final anzeigen
+        runFieldAll();
+
+        if (autoMode) {
+            cycleCount++;
+            cycleCountEl.textContent = `Zyklus ${cycleCount}`;
+            log(`🔄 Zyklus ${cycleCount} startet...`, 'warn');
+            setTimeout(() => {
+                resetAll();
+                setTimeout(() => executeStep(0), 300);
+            }, 3000);
+        }
+        return;
+    }
+
+    const step = steps[index];
+    const module = MODULES[index];
+
+    step.className = 'step active';
+    const statusEl = step.querySelector('.status');
+    statusEl.textContent = '⏳ läuft...';
+    isRunning = true;
+
+    log(`▶ ${module.id} — wird ausgeführt...`, 'info');
+
+    const duration = 400 + Math.random() * 600;
+    const timeout = setTimeout(() => {
+        const success = Math.random() > 0.1;
+        if (success) {
+            step.className = 'step done';
+            statusEl.textContent = '✅ erledigt';
+            log(`✅ ${module.id} — erfolgreich abgeschlossen`, 'ok');
+
+            // Spezifische Logik
+            if (module.id === 'RESPO') log('📊 RESPO-Matrix initialisiert (3-9-27-81)', 'ok');
+            if (module.id === 'NC.engine') log('🧠 NC.engine gestartet — 243 Neuronen', 'ok');
+            if (module.id === 'FIELD') {
+                log('🌿 FIELD F81-UNIT — Stage 1 läuft...', 'field');
+                runFieldStage(1);
+                setTimeout(() => {
+                    log('🌿 FIELD — Stage 2 läuft...', 'field');
+                    runFieldStage(2);
+                }, 300);
+                setTimeout(() => {
+                    log('🌿 FIELD — Stage 3 läuft...', 'field');
+                    runFieldStage(3);
+                }, 600);
+            }
+            if (module.id === 'AXIOM') {
+                log('⚡ AXIOM aktiviert — System ist treu', 'ok');
+                geoDisplay.textContent = `   ★\n  / \\\n /   \\\n/_____\\\n  ●  ●`;
+                runFieldAll();
+            }
+
+            updateProgress();
+            updateModuleCount();
+            currentStep = index;
+            stepTimeouts.push(setTimeout(() => executeStep(index + 1), 200 + Math.random() * 300));
+
+        } else {
+            step.className = 'step error';
+            statusEl.textContent = '❌ Fehler';
+            log(`❌ ${module.id} — FEHLER!`, 'err');
+            statusLed.textContent = '●';
+            statusLed.style.color = '#f44';
+            isRunning = false;
+            log('⛔ Boot abgebrochen — bitte RESET', 'err');
+        }
+        updateModuleCount();
+    }, duration);
+    stepTimeouts.push(timeout);
+}
+
+function boot() {
+    if (isRunning) { log('⚠️ System läuft bereits', 'warn'); return; }
+    const hasDone = document.querySelectorAll('.step.done').length > 0;
+    if (hasDone) { resetAll(); setTimeout(() => boot(), 300); return; }
+
+    log('🚀 BOOT-SEQUENZ gestartet', 'warn');
+    statusLed.textContent = '●';
+    statusLed.style.color = '#ff4';
+    currentStep = -1;
+    executeStep(0);
+}
+
+function stepManual() {
+    if (isRunning) { log('⚠️ System läuft bereits', 'warn'); return; }
+    const nextIndex = currentStep + 1;
+    if (nextIndex >= MODULES.length) { log('✅ Alle Module bereits ausgeführt', 'ok'); return; }
+    if (currentStep >= 0) { executeStep(nextIndex); }
+    else { boot(); }
+}
+
+function toggleAuto() {
+    autoMode = !autoMode;
+    btnAuto.textContent = autoMode ? '⏸ PAUSE' : '▶ AUTO';
+    if (autoMode) {
+        log('▶ AUTO-Modus gestartet', 'warn');
+        if (!isRunning && currentStep < MODULES.length - 1) {
+            resetAll();
+            setTimeout(() => boot(), 500);
+        }
+    } else {
+        log('⏸ AUTO-Modus pausiert', 'warn');
+        if (autoTimer) { clearInterval(autoTimer); autoTimer = null; }
+    }
+}
+
+// ============================================================
+// 9. FIELD-MANUAL
+// ============================================================
+function manualField() {
+    log('🌿 FIELD — manueller Start aller 3 Etagen', 'field');
+    runFieldAll();
+}
+
+// ============================================================
+// 10. TASTATUR-KURZBEFEHLE
+// ============================================================
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'b' || e.key === 'B') btnBoot.click();
+    if (e.key === 's' || e.key === 'S') btnStep.click();
+    if (e.key === 'r' || e.key === 'R') btnReset.click();
+    if (e.key === 'a' || e.key === 'A') btnAuto.click();
+    if (e.key === 'f' || e.key === 'F') btnField.click();
+    if (e.key === ' ') { e.preventDefault(); toggleAuto(); }
+});
+
+// ============================================================
+// 11. BUTTON-BINDING
+// ============================================================
+btnBoot.addEventListener('click', boot);
+btnStep.addEventListener('click', stepManual);
+btnReset.addEventListener('click', resetAll);
+btnAuto.addEventListener('click', toggleAuto);
+btnField.addEventListener('click', manualField);
+
+// ============================================================
+// 12. UHR
+// ============================================================
+function updateClock() {
+    document.getElementById('clock').textContent = `⏱️ ${new Date().toLocaleTimeString()}`;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ============================================================
+// 13. INIT
+// ============================================================
+log('⚡ MXU · OS Runtime mit FIELD geladen', 'warn');
+log('🌿 FIELD F81-UNIT — 3 Etagen: ID → ECO → EFFECT', 'field');
+log(`📦 ${MODULES.length} Module — warte auf BOOT`, 'info');
+log('⌨️  b=Boot  s=Step
