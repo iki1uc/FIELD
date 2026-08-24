@@ -175,3 +175,6 @@ export const FIELD = (function() {
 // DEFAULT EXPORT für Module-Import
 // ============================================================
 export default FIELD;
+// FIELD.js – ohne export, als globale Variable
+const FIELD = { ... };  // deine Funktionen
+window.FIELD = FIELD;
