@@ -1,0 +1,5 @@
+import { FIELD } from "../service/FIELD/field.core.js";
+
+export function prefetch() {
+    FIELD.init();
+}
