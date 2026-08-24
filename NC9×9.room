@@ -1,0 +1,6 @@
+import { FIELD } from "./FIELD/field.core.js";
+
+export function init() {
+    console.log("NC9×9 Raster aktiv");
+    console.log("FIELD Influence:", FIELD.influence);
+}
