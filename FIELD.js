@@ -178,3 +178,48 @@ export default FIELD;
 // FIELD.js – ohne export, als globale Variable
 const FIELD = { ... };  // deine Funktionen
 window.FIELD = FIELD;
+// FIELD.js – Minimale Implementierung für MXU-OS
+const FIELD = {
+  // Stage 1: ID – Identität
+  id() {
+    return {
+      status: 'ok',
+      meta: { label: 'F81-UNIT' },
+      owner: 'MXU·System',
+      version: '1.0',
+      timestamp: new Date().toISOString()
+    };
+  },
+
+  // Stage 2: ECO – Ökologische Metriken
+  eco() {
+    return {
+      status: 'ok',
+      meta: { label: 'ECO-Metrics' },
+      metrics: {
+        energyConsumption_kWh: 42.0,
+        waterUse_m3: 120,
+        emissions_tCO2e: 3.4,
+        biodiversityIndex: 0.72
+      }
+    };
+  },
+
+  // Stage 3: EFFECT – Entscheidung / Wirkung
+  effect() {
+    return {
+      status: 'ok',
+      meta: { label: 'EFFECT-Decision' },
+      decision: 'CONTINUE',
+      recommendation: 'Stabiler Betrieb – alle Metriken im grünen Bereich',
+      nextAction: 'FIELD-Zyklus fortsetzen'
+    };
+  },
+
+  // Reset-Funktion
+  reset() {
+    return { status: 'ok', message: 'FIELD zurückgesetzt' };
+  }
+};
+
+export default FIELD;
